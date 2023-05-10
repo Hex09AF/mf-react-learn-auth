@@ -1,45 +1,39 @@
-import React, { FormEventHandler, useState } from "react";
+import React, { FormEventHandler, useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "shell/ShellIndex";
 import { Link } from "react-router-dom";
-
-async function postJSON(data: Record<string, any>) {
-  try {
-    const response = await fetch("http://localhost:3000/auth/login", {
-      method: "POST", // or 'PUT'
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-
-    const result: {
-      access_token: string;
-    } = await response.json();
-    console.log("Success:", result);
-
-    return result;
-  } catch (error) {
-    console.error("Error:", error);
-  }
-}
+import loginSlice, { login } from "../features/login/slice";
+import { useStore } from "react-redux";
 
 const Page1 = () => {
-  const [jwt, setJWT] = useState<string>();
+  const store = useStore();
+  const dispatch = useAppDispatch();
+  const state = useAppSelector((state) => state.login);
+  console.log(state);
 
   const handleSubmit: FormEventHandler = async (e) => {
     e.preventDefault();
     const data = new FormData(e.target as HTMLFormElement);
-    const res = await postJSON({
-      email: data.get("email"),
-      password: data.get("password"),
-    });
-    setJWT(res?.access_token);
+    dispatch(
+      login({
+        email: data.get("email") + "",
+        password: data.get("password") + "",
+      })
+    );
   };
+
+  const [fin, setFin] = useState(false);
+
+  useEffect(() => {
+    store.injectReducer("login", loginSlice);
+    setFin(true);
+  }, []);
+
+  if (!fin) return <div></div>;
 
   return (
     <div className="w-full h-full p-4 mx-auto max-w-4xl">
       <Link to="/page-b">Go to Page b</Link>
 
-      {jwt}
       <form onSubmit={handleSubmit}>
         <div className="mb-6">
           <label
